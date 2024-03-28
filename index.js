@@ -1,8 +1,10 @@
 require("dotenv").config();
 const conn = require("./db/conn");
 
+const Usuario = require("../Models/Usuario")
+
 conn
-    .authenticate()
+    .sync()
     .then(()=>{
     console.log("Conectado com sucesso!");
     })

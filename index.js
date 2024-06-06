@@ -2,11 +2,16 @@ require("dotenv").config();
 
 const conn = require("./db/conn");
 
-const Usuario = require("../Models/Usuario")
-const Jogo = require("../Models/Jogo")
+const Usuario = require("./Models/Usuario")
+const Jogo = require("./Models/Jogo")
 
 const express = require("express");
 const app = express();
+const handlebars = require("express-handlebars");
+
+app.engine("handlebars", handlebars.engine());
+
+app.set("view engine", "handlebars");
 
 app.use(
     express.urlencoded({
@@ -15,26 +20,39 @@ app.use(
 );
 app.use(express.json());
 
-app.get("/Usuario/novo", (req, res) => {
-    res.sendFile('${__dirname}/views/formUsuario.html');
+app.get("/usuario/novo", (req, res) => {
+    res.render('formUsuario');
 } );
+
+
+app.get("/", (req, res) => {
+    res.render('home');
+} );
+
+
+app.get("/usuarios", (req, res) => {
+    res.render('usuarios');
+} );
+
 
 app.post("/usuarios/novo", async (req, res) => {
     const nickname = req.body.nickname;
     const nome = req.body.nome;
 
-    client.query(
-        `INSERT INTO usuarios (usuario_nickname, usuario_nome)
-        values ('${nick}', '${nome}') returning *`,
-        (err, result) => {
-            //callback
-        }
-    ) 
-    });
+    // client.query(
+    //     `INSERT INTO usuarios (usuario_nickname, usuario_nome)
+    //     values ('${nick}', '${nome}') returning *`,
+    //     (err, result) => {
+    //         //callback
+    //     }
+    // ) 
+    // });
 
     const usuario = await Usuario.create(dadosUsuario);
 
     res.send("Usuário inserido sob o id: " + usuario.id);
+
+});
 
 app.get("/Jogo/novo", (req, res) => {
     res.sendFile('${__dirname}/views/formJogo.html');

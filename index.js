@@ -75,11 +75,44 @@ app.post("/jogos/novo", async (req, res) => {
     res.send("Jogo inserido sob o id: " + jogo.id);
 });
 
-app.get("/usuarios/:id/atualizar", async (req, res) =>{
+app.get("/usuarios/:id/atualizar", async (req, res) => {
     const id = req.params.id;
     const usuario = await Usuario.findByPk(id, { raw: true });
 
     res.render("formUsuario", usuario);
+});
+
+
+app.post("/usuarios/:id/atualizar", async (req, res) => {
+    const id = req.params.id;
+    
+    const dadosUsuario = {
+        nickname: req.body.nickname,
+        nome: req.body.nome,
+    };
+
+    const registrosAfetados = await Usuario.update(dadosUsuario, {where: { id:id } });
+
+    if (registrosAfetados > 0) {
+        res.redirect("/usuarios");
+    } else {
+        res.send("Erro ao atualizar usuário!");
+    }
+
+});
+
+app.post("/usuarios/excluir", async (req, res) => {
+
+    const id = req.body.id;
+
+    const registrosAfetados = await Usuario.destroy({where: { id:id } });
+
+    if (registrosAfetados > 0) {
+        res.redirect("/usuarios");
+    } else {
+        res.send("Erro ao atualizar usuário!");
+    }
+
 });
 
 app.listen(8000, () => {

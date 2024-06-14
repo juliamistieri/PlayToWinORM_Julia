@@ -15,6 +15,12 @@
         <td>{{this.nome}}</td>
         <td>
             <a href="/usuarios/{{this.id}}/atualizar">Atualizar</a>
+            <form action="/usuarios/excluir" method="post">
+            {{!-- o type hidden serve para esconder o id até mesmo do usuário, mas sem apagá-lo --}} 
+            {{!-- para fazer esse comentário, clique shift, alt e a letra A --}} 
+            <input type="hidden" value="{{this.id}}" name="id" />
+            <input type="submit" value="Excluir" />
+            </form>
         </td>
     </tr>
     {{/each}}

@@ -1,46 +1,149 @@
+// Importações de módulos:
 require("dotenv").config();
-
 const conn = require("./db/conn");
-
-const Usuario = require("./Models/Usuario")
-const Jogo = require("./Models/Jogo")
-
 const express = require("express");
+const exphbs = require("express-handlebars");
+
+const Usuario = require("./models/Usuario");
+const Cartao = require("./models/Cartao");
+const Jogo = require("./models/Jogo");
+
+Jogo.belongsToMany(Usuario, { through: "aquisicoes" });
+Usuario.belongsToMany(Jogo, { through: "aquisicoes" });
+
+// Instanciação do servidor:
 const app = express();
-const handlebars = require("express-handlebars");
 
-app.engine("handlebars", handlebars.engine());
-
+// Vinculação do Handlebars ao Express:
+app.engine("handlebars", exphbs.engine());
 app.set("view engine", "handlebars");
 
+// Configurações no express para facilitar a captura
+// de dados recebidos de formulários
 app.use(
-    express.urlencoded({
-        extended: true,
-    })
+  express.urlencoded({
+    extended: true,
+  })
 );
+
 app.use(express.json());
 
-app.get("/usuarios/novo", (req, res) => {
-    res.render('formUsuario');
-} );
-
-
 app.get("/", (req, res) => {
-    res.render('home');
-} );
-
+  res.render("home");
+});
 
 app.get("/usuarios", async (req, res) => {
-    const usuarios = await Usuario.findAll({raw: true})
-    res.render('usuarios', { usuarios });
-} );
+  const usuarios = await Usuario.findAll({ raw: true });
 
+  res.render("usuarios", { usuarios });
+});
+
+app.get("/usuarios/novo", (req, res) => {
+  res.render("formUsuario");
+});
 
 app.post("/usuarios/novo", async (req, res) => {
-    const dadosUsuario = {
-        nickname: req.body.nickname,
-        nome: req.body.nome,
-    };
+  const dadosUsuario = {
+    nickname: req.body.nickname,
+    nome: req.body.nome,
+  };
+
+  const usuario = await Usuario.create(dadosUsuario);
+  res.send("Usuário inserido sob o id " + usuario.id);
+});
+
+app.get("/usuarios/:id/update", async (req, res) => {
+  const id = parseInt(req.params.id);
+  const usuario = await Usuario.findByPk(id, { include: ["Cartaos"] });
+
+  res.render("formUsuario", { usuario });
+  // const usuario = Usuario.findOne({
+  //   where: { id: id },
+  //   raw: true,
+  // });
+});
+
+app.post("/usuarios/:id/update", async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const dadosUsuario = {
+    nickname: req.body.nickname,
+    nome: req.body.nome,
+  };
+
+  const retorno = await Usuario.update(dadosUsuario, { where: { id: id } });
+
+  if (retorno > 0) {
+    res.redirect("/usuarios");
+  } else {
+    res.send("Erro ao atualizar usuário");
+  }
+});
+
+app.post("/usuarios/:id/delete", async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const retorno = await Usuario.destroy({ where: { id: id } });
+
+  if (retorno > 0) {
+    res.redirect("/usuarios");
+  } else {
+    res.send("Erro ao excluir usuário");
+  }
+});
+
+// Rotas para cartões
+
+//Ver cartões do usuário
+app.get("/usuarios/:id/cartoes", async (req, res) => {
+  const id = parseInt(req.params.id);
+  const usuario = await Usuario.findByPk(id, { raw: true });
+
+  const cartoes = await Cartao.findAll({
+    raw: true,
+    where: { UsuarioId: id },
+  });
+
+  res.render("cartoes.handlebars", { usuario, cartoes });
+});
+
+//Formulário de cadastro de cartão
+app.get("/usuarios/:id/novoCartao", async (req, res) => {
+  const id = parseInt(req.params.id);
+  const usuario = await Usuario.findByPk(id, { raw: true });
+
+  res.render("formCartao", { usuario });
+});
+
+//Cadastro de cartão
+app.post("/usuarios/:id/novoCartao", async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const dadosCartao = {
+    numero: req.body.numero,
+    nome: req.body.nome,
+    codSeguranca: req.body.codSeguranca,
+    UsuarioId: id,
+  };
+
+  await Cartao.create(dadosCartao);
+
+  res.redirect(`/usuarios/${id}/cartoes`);
+});
+
+app.listen(8000, () => {
+  console.log("Server rodando!");
+});
+
+conn
+  .sync()
+  .then(() => {
+    console.log("Conectado e sincronizado com o banco de dados!");
+          //exibeUsuariosCadastrados
+  })
+  .catch((err) => {
+    console.log("Ocorreu um erro: " + err);
+  });
 
     // client.query(
     //     `INSERT INTO usuarios (usuario_nickname, usuario_nome)
@@ -50,123 +153,3 @@ app.post("/usuarios/novo", async (req, res) => {
     //     }
     // ) 
     // });
-
-    const usuario = await Usuario.create(dadosUsuario);
-
-    res.send("Usuário inserido sob o id: " + usuario.id);
-
-});
-
-app.get("/Jogo/novo", (req, res) => {
-    res.sendFile('${__dirname}/views/formJogo.html');
-} );
-
-app.post("/jogos/novo", async (req, res) => {
-    const nickname = req.body.nickname;
-    const nome = req.body.nome;
-
-    const dadosJogo = {
-        nickname,
-        nome,
-    };
-
-    const jogo = await Jogo.create(dadosJogo);
-
-    res.send("Jogo inserido sob o id: " + jogo.id);
-});
-
-app.get("/usuarios/:id/atualizar", async (req, res) => {
-    const id = req.params.id;
-    const usuario = await Usuario.findByPk(id, { raw: true });
-
-    res.render("formUsuario", usuario);
-});
-
-
-app.post("/usuarios/:id/atualizar", async (req, res) => {
-    const id = req.params.id;
-    
-    const dadosUsuario = {
-        nickname: req.body.nickname,
-        nome: req.body.nome,
-    };
-
-    const registrosAfetados = await Usuario.update(dadosUsuario, {where: { id:id } });
-
-    if (registrosAfetados > 0) {
-        res.redirect("/usuarios");
-    } else {
-        res.send("Erro ao atualizar usuário!");
-    }
-
-});
-
-app.post("/usuarios/excluir", async (req, res) => {
-
-    const id = req.body.id;
-
-    const registrosAfetados = await Usuario.destroy({where: { id:id } });
-
-    if (registrosAfetados > 0) {
-        res.redirect("/usuarios");
-    } else {
-        res.send("Erro ao atualizar usuário!");
-    }
-
-});
-
-app.listen(8000, () => {
-    console.log("Server executando na porta 8000!");
-})
-
-conn
-    .sync()
-    .then(()=>{
-    console.log("Conectado com sucesso!");
-    })
-    .catch((err)=>{
-    console.log("Ocorreu um erro: " + err);
-});
-
-const { Client } = require("pg");
-
-const client = new Client({
-    username: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    database: process.env.DB_DATABASE,
-});
-
-client
-    .connect()
-    .then(() => {
-        console.log("Conectado ao Banco de Dados PostGreSQL");
-        //exibeUsuariosCadastrados
-    })
-    .catch((err) => {
-        console.log('Erro: ${err}');
-    });
-
-    function exibeUsuariosCadastrados() {
-        cliente.query("select * from usuarios", (err, result) => {
-            if (err) {
-                console.error("Erro ao executar a busca: " + err);
-            }
-            else {
-                console.log("Resultado: " + JSON.stringify(result.rows));
-            }
-            fechaConexao();
-        });
-    }
-
-    function fechaConexao() {
-        client 
-        .end()
-        .then(() => {
-            console.log("Conexão encerrada!");
-        })
-        .catch((err) => {
-            console.error("Erro ao encerrar conexão: ", err);
-        });
-    }

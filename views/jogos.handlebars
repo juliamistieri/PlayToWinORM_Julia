@@ -1,16 +1,16 @@
-<h1>Usuários Cadastrados</h1>
+<h1>Jogos Cadastrados</h1>
 
-<a href="/usuarios/novo">Cadastrar novo usuário</a>
+<a href="/jogos/novo">Cadastrar novo jogo</a>
 
 <table border="1">
   <!-- table row -->
   <tr>
     <!-- table head -->
-    <th>Id</th>
-    <th>Nickname</th>
-    <th>Nome</th>
+    <th>Título</th>
+    <th>Descrição</th>
+    <th>Preço</th>
   </tr>
-  {{#each usuarios}}
+  {{#each jogos}}
     <tr>
       <td>{{this.id}}</td>
       <td>{{this.nickname}}</td>
@@ -18,11 +18,11 @@
       <td>
         {{!-- o type hidden serve para esconder o id até mesmo do usuário, mas sem apagá-lo --}} 
             {{!-- para fazer esse comentário, clique shift, alt e a letra A --}} 
-        <a href="/usuarios/{{this.id}}/update">Atualizar</a>
-        <form action="/usuarios/{{this.id}}/delete" method="post">
+        <a href="/jogos/{{this.id}}/update">Atualizar</a>
+        <form action="/jogos/{{this.id}}/delete" method="post">
           <input type="submit" value="Excluir" />
         </form>
-        <a href="/usuarios/{{this.id}}/cartoes">Ver cartões</a>
+        <a href="/jogos/{{this.id}}/conquistas">Ver conquistas</a>
       </td>
     </tr>
   {{/each}}

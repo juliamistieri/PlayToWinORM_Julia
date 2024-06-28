@@ -7,6 +7,8 @@ const exphbs = require("express-handlebars");
 const Usuario = require("./models/Usuario");
 const Cartao = require("./models/Cartao");
 const Jogo = require("./models/Jogo");
+const Conquista = require("./models/Conquista");
+
 
 Jogo.belongsToMany(Usuario, { through: "aquisicoes" });
 Usuario.belongsToMany(Jogo, { through: "aquisicoes" });
@@ -54,7 +56,7 @@ app.post("/usuarios/novo", async (req, res) => {
 
 app.get("/usuarios/:id/update", async (req, res) => {
   const id = parseInt(req.params.id);
-  const usuario = await Usuario.findByPk(id, { include: ["Cartaos"] });
+  const usuario = await Usuario.findByPk(id, { raw:true });
 
   res.render("formUsuario", { usuario });
   // const usuario = Usuario.findOne({
@@ -131,22 +133,128 @@ app.post("/usuarios/:id/novoCartao", async (req, res) => {
   res.redirect(`/usuarios/${id}/cartoes`);
 });
 
+
+
+
+app.get("/jogos", async (req, res) => {
+  const jogos = await Jogo.findAll({ raw: true });
+
+  res.render("jogos", { jogos });
+});
+
+app.get("/jogos/novo", (req, res) => {
+  res.render("formJogo");
+});
+
+app.post("/jogos/novo", async (req, res) => {
+  const dadosJogos = {
+    titulo: req.body.titulo,
+    descricao: req.body.descricao,
+    preco: req.body.preco,
+  };
+
+  const jogo = await Jogo.create(dadosJogos);
+  res.send("Título do jogo inserido " + jogo.titulo);
+});
+
+app.get("/jogos/:id/update", async (req, res) => {
+  const id = parseInt(req.params.id);
+  const jogo = await Jogo.findByPk(id, { raw:true });
+
+  res.render("formJogo", { jogo });
+  // const jogo = Jogo.findOne({
+  //   where: { titulo: titulo },
+  //   raw: true,
+  // });
+});
+
+
+app.post("/jogos/:id/update", async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const dadosJogo = {
+    titulo: req.body.titulo,
+    descricao: req.body.descricao,
+    preco: req.body.preco,
+  };
+
+  const retorno = await Jogo.update(dadosJogo, { where: { id: id } });
+
+  if (retorno > 0) {
+    res.redirect("/jogos");
+  } else {
+    res.send("Erro ao atualizar jogo");
+  }
+});
+
+app.post("/jogos/:id/delete", async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const retorno = await Jogo.destroy({ where: { id: id } });
+
+  if (retorno > 0) {
+    res.redirect("/jogos");
+  } else {
+    res.send("Erro ao excluir jogo");
+  }
+});
+
+// Rotas para conquistas
+
+//Ver conquistas do Jogo
+app.get("/jogos/:id/conquistas", async (req, res) => {
+  const id = parseInt(req.params.id);
+  const jogo = await Jogo.findByPk(id, { raw: true });
+
+  const conquistas = await Conquista.findAll({
+    raw: true,
+    where: { JogoId: id },
+  });
+
+  res.render("conquistas.handlebars", { jogo, conquistas });
+});
+
+//Formulário de cadastro de conquista
+app.get("/jogos/:id/novaConquista", async (req, res) => {
+  const id = parseInt(req.params.id);
+  const jogo = await Usuario.findByPk(id, { raw: true });
+
+  res.render("formConquista", { jogo });
+});
+
+//Cadastro de conquista
+app.post("/jogos/:id/novaConquista", async (req, res) => {
+  const id = parseInt(req.params.id);
+
+  const dadosConquista = {
+    titulo: req.body.titulo,
+    descricao: req.body.descricao,
+    JogoTitulo: titulo,
+  };
+
+  await Conquista.create(dadosConquista);
+
+  res.redirect(`/jogos/${id}/conquistas`);
+});
+
+
+
 app.listen(8000, () => {
   console.log("Server rodando!");
 });
 
 conn
-  .sync()
+  .sync({force:true})
   .then(() => {
     console.log("Conectado e sincronizado com o banco de dados!");
-          //exibeUsuariosCadastrados
+          //exibejogosCadastrados
   })
   .catch((err) => {
     console.log("Ocorreu um erro: " + err);
   });
 
     // client.query(
-    //     `INSERT INTO usuarios (usuario_nickname, usuario_nome)
+    //     `INSERT INTO jogos (usuario_nickname, usuario_nome)
     //     values ('${nick}', '${nome}') returning *`,
     //     (err, result) => {
     //         //callback

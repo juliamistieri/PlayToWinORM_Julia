@@ -18,7 +18,7 @@
       <td>
         {{!-- o type hidden serve para esconder o id até mesmo do usuário, mas sem apagá-lo --}} 
             {{!-- para fazer esse comentário, clique shift, alt e a letra A --}} 
-        <a href="/jogos/{{this.id}}/update">Atualizar</a>
+        {{!-- <a href="/jogos/{{this.id}}/update">Atualizar</a> --}}
         <form action="/jogos/{{this.id}}/delete" method="post">
           <input type="submit" value="Excluir" />
         </form>

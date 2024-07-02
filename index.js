@@ -217,7 +217,7 @@ app.get("/jogos/:id/conquistas", async (req, res) => {
 //Formulário de cadastro de conquista
 app.get("/jogos/:id/novaConquista", async (req, res) => {
   const id = parseInt(req.params.id);
-  const jogo = await Usuario.findByPk(id, { raw: true });
+  const jogo = await Jogo.findByPk(id, { raw: true });
 
   res.render("formConquista", { jogo });
 });
@@ -229,7 +229,7 @@ app.post("/jogos/:id/novaConquista", async (req, res) => {
   const dadosConquista = {
     titulo: req.body.titulo,
     descricao: req.body.descricao,
-    JogoTitulo: titulo,
+    JogoId: id,
   };
 
   await Conquista.create(dadosConquista);
@@ -244,7 +244,7 @@ app.listen(8000, () => {
 });
 
 conn
-  .sync({force:true})
+  .sync(/* {force:true}   zerar o banco de dados toda vez que faço alterações no código */)
   .then(() => {
     console.log("Conectado e sincronizado com o banco de dados!");
           //exibejogosCadastrados

@@ -5,15 +5,11 @@ const Jogo = require("../models/Jogo");
 const Conquista = db.define(
   "Conquista",
   {
-    numero: {
+    titulo: {
       type: DataTypes.STRING(16),
       allowNull: false,
     },
-    nome: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    codSeguranca: {
+    descricao: {
       type: DataTypes.STRING,
       allowNull: false,
     },
